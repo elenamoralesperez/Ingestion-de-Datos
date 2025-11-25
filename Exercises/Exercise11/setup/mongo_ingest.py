@@ -100,23 +100,28 @@ class MongoFlightIngestor:
         self.client.close()
         print("MongoDB connection closed.")
 
-
 def main():
     # --- CONFIGURATION SECTION ---
-    CONNECTION_STRING = "mongodb://<username>:<password>@<host>:<port>"
-    DATABASE = "<database_name>"
-    COLLECTION = "<collection_name>"
-    FILENAME = "flights_data_backup.json"
+    # 1. Credenciales: Si usas Docker, usuario/clave suelen ser 'root' y 'example'
+    #    Si no tienes usuario, usa: "mongodb://localhost:27017/"
+    CONNECTION_STRING = "mongodb://root:example@localhost:27017/"
+    
+    # 2. Nombres exactos que vi en tu captura de pantalla de Mongo Express:
+    DATABASE = "DATABASE"        
+    COLLECTION = "COLLECTION"    
+    
+    # 3. Asegúrate de que este archivo esté en la misma carpeta que tu script .py
+    FILENAME = "flights_data_backup.json" 
     # ------------------------------
 
-    # Create an ingestor instance
+    # Read and ingest data
+    # Crear la instancia del ingestor
     ingestor = MongoFlightIngestor(
         connection_string=CONNECTION_STRING,
         database_name=DATABASE,
         collection_name=COLLECTION,
     )
-
-    # Read and ingest data
+    # ------------------------------
     records = ingestor.read_json_file(filename=FILENAME)
     ingestor.bulk_insert(records=records)
 

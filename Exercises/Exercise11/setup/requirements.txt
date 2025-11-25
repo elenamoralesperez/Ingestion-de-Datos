@@ -1,2 +1,4 @@
 pymongo==4.15.4
 python_dateutil==2.9.0.post0
+bson
+pymongo
