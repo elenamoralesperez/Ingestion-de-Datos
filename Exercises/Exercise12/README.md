@@ -15,6 +15,10 @@ docker compose stop nifi
 ## Exercise
 
 1. **Flights Departing from a Specific Airport and Arriving in Another**: Retrieve all flights that depart from 'BCN' and arrive in 'MAD'.
+
+- 
+
+
 2. **Flights with Delays**: Retrieve all flights that have a departure delay greater than 10 minutes.
 3. **Flights Arriving in a Specific Time Frame:** Retrieve all flights that arrive in the year 2019.
 4. **Flights Currently in the Air:** Retrieve all flights that are currently in the air and above 10,000 feet.

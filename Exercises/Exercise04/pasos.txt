@@ -1,0 +1,103 @@
+Paso 1: InvokeHTTP (Descargar datos)
+Este es el que hace la llamada a la web de vuelos.
+
+InvokeHTTP - PROPERTIES - HTTP URL - API Key de AviationStack
+
+
+
+Paso 2: SplitJson (Cortar los datos)
+Este separa el archivo gigante en un archivo por cada vuelo.
+
+SplitJson - PROPERTIES - Json Path Expression - $.data
+
+
+
+Paso 3: PutMongo (Guardar en Base de Datos)
+Este guarda cada vuelo en MongoDB.
+
+PutMongo - PROPERTIES - 
+Mongo Database Name: aviation
+Mongo Collection Name: flights
+
+Para la URL:
+Crear el Servicio de Conexión
+En esa misma pantalla de tu captura, haz clic en el hueco vacío a la derecha de Client Service (donde dice No value set).
+En el menú que se abre, elige Create new service...
+Selecciona MongoDBControllerService y dale al botón Create.
+Justo al lado del nombre del servicio que acabas de crear, verás un icono de una flecha pequeña (➡️) o una llave inglesa.
+Te pedirá guardar los cambios del procesador (Save changes before going to Controller Service?). SÍ.
+Te llevará a una lista de servicios. Verás el tuyo ahí. Haz clic en el icono del Engranaje (⚙️) de la derecha para editarlo.
+Pestaña PROPERTIES.
+Casilla Mongo URI.
+APPLY.
+El servicio está creado pero "apagado".
+En la lista de servicios, busca el icono del Rayo (⚡) a la derecha de tu servicio.
+Dale a Enable.
+
+
+
+Paso 4: EvaluateJsonPath (Sacar información)
+Este busca a qué aeropuerto llega el vuelo y lo apunta en una "etiqueta" invisible.
+
+EvaluateJsonPath - PROPERTIES - Seleccionar: flowfile-attribute - + (New Property)
+Property Name: arrival_airport
+Value: $.arrival.iata
+
+
+
+Paso 5: UpdateAttribute (Renombrar archivo)
+Este cambia el nombre del archivo para que no se sobreescriban.
+
+UpdateAttribute - PROPERTIES - + (New Property).
+Property Name: filename
+Value: flight-${arrival_airport}-${now():toNumber()}.json
+(now() para generar un número único basado en la hora, es más fácil que el secuencial).
+
+
+
+Paso 6: RouteOnAttribute (El Semáforo)
+Este decide si va a la carpeta de Madrid o Barcelona.
+
+RouteOnAttribute - PROPERTIES - Boton +
+Name: madrid
+Value: ${arrival_airport:equals('MAD')}
+
+Otra vez al botón +
+Name: barcelona
+Value: ${arrival_airport:equals('BCN')}
+
+
+
+Paso 7: PutFile (Guardar en carpetas)
+Aquí tendrás dos cajitas PutFile.
+
+Para la cajita de Madrid:
+PutFile - Properties - Directory: /tmp/data/madrid
+
+Para la cajita de Barcelona:
+Otro PutFile - Properties - Directory: /tmp/data/barcelona
+
+
+
+🔌Las Conexiones (Flechas)
+
+1. De InvokeHTTP a SplitJson -> Marca la casilla Response.
+(En InvokeHTTP, ve a la pestaña Relationships y marca "Auto-terminate" en todas las demás: Original, Failure, Retry, No Retry).
+
+2. De SplitJson a PutMongo -> Marca split.
+(Auto-terminate: original, failure).
+
+3. De PutMongo a EvaluateJsonPath -> Marca success.
+(Auto-terminate: failure).
+
+4. De EvaluateJsonPath a UpdateAttribute -> Marca matched.
+(Auto-terminate: failure, unmatched).
+
+5. De UpdateAttribute a RouteOnAttribute -> Marca success.
+
+6. De RouteOnAttribute a PutFile (Madrid) -> Marca madrid.
+
+7. De RouteOnAttribute a PutFile (Barcelona) -> Marca barcelona.
+(En RouteOnAttribute, Auto-terminate: unmatched).
+
+8. En los dos PutFile, ve a Relationships y haz Auto-terminate en success y failure (porque aquí acaba el flujo).
